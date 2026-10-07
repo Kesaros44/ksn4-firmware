@@ -1,0 +1,3 @@
+description: Retype the last word using the opposite 한/영 language mode
+compatible: "ksn,behavior-word-flip"
+include: one_param.yaml

@@ -1,0 +1,35 @@
+---
+include:
+  - board: nice_nano//zmk
+    shield: ksn_4_left
+  - board: nice_nano//zmk
+    shield: ksn_4_right
+  - board: nice_nano//zmk
+    shield: settings_reset
+    artifact-name: settings_reset
+  # ---------------------------------------------------------------------
+  # 정식 빌드: 위 3개 (ksn_4_left / ksn_4_right / settings_reset)
+  #   - USB 로깅 없음 -> 유선 연결 시 순수 HID 키보드 하나로만 열거됨
+  #   - USB HID 세부 설정은 config/boards/shields/ksn_4/ksn_4_right.conf의
+  #     "유선(USB) 연결 시 회사 보안 프로그램 호환성" 섹션 참고
+  # 회사 PC에 유선으로 꽂을 때는 반드시 이 정식 빌드를 쓸 것.
+  # ---------------------------------------------------------------------
+  # 디버그 전용 빌드 (USB CDC-ACM 로깅 포함) - 평소 사용 금지.
+  # 로깅용 USB 시리얼 인터페이스가 항상 켜져 있으면 (1) 일부 회사 보안
+  # 프로그램이 컴포지트 USB 장치를 통째로 막을 수 있고, (2) 유선 연결 중
+  # 계속 발생하는 USB 트래픽이 central-peripheral 분할 링크용 블루투스
+  # 라디오 타이밍을 방해해 상태 LED 깜빡임/타이핑 끊김/키 반복 입력의
+  # 원인이 될 수 있어 정식 빌드에서는 제거함. 필요할 때만 이 디버그
+  # 빌드를 따로 플래시해서 사용할 것.
+  # 주의: 디버그 빌드도 정식 빌드와 같은 USB VID/PID를 쓰므로, 사내
+  # 매체제어 화이트리스트를 통과하면서 CDC 시리얼 포트를 노출하게 됨.
+  # 회사 PC가 아닌 개인 PC에서만 플래시/사용하고, 디버깅이 끝나면 정식
+  # 빌드로 반드시 되돌릴 것. (아티팩트 이름 끝의 _debug 로 구분)
+  - board: nice_nano//zmk
+    shield: ksn_4_left
+    snippet: zmk-usb-logging
+    artifact-name: ksn_4_left_debug
+  - board: nice_nano//zmk
+    shield: ksn_4_right
+    snippet: zmk-usb-logging
+    artifact-name: ksn_4_right_debug

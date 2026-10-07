@@ -1,0 +1,38 @@
+#include "ksn_4.dtsi"
+
+/* 오른쪽은 KSN-1과 동일한 11열 */
+&kscan0 {
+    col-gpios
+        = <&gpio0 11 GPIO_ACTIVE_HIGH>
+        , <&gpio1 4  GPIO_ACTIVE_HIGH>
+        , <&gpio1 6  GPIO_ACTIVE_HIGH>
+        , <&gpio1 1  GPIO_ACTIVE_HIGH>
+        , <&gpio1 2  GPIO_ACTIVE_HIGH>
+        , <&gpio1 7  GPIO_ACTIVE_HIGH>
+        , <&gpio1 15 GPIO_ACTIVE_HIGH>
+        , <&gpio1 13 GPIO_ACTIVE_HIGH>
+        , <&gpio1 11 GPIO_ACTIVE_HIGH>
+        , <&gpio0 10 GPIO_ACTIVE_HIGH>
+        , <&gpio0 9  GPIO_ACTIVE_HIGH>
+        ;
+};
+
+&default_transform {
+    col-offset = <7>;   /* 왼쪽 열 수(7) */
+};
+
+/ {
+    encoder: encoder_right {
+        compatible = "alps,ec11";
+        a-gpios = <&gpio0 2  (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        b-gpios = <&gpio0 29 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        steps = <80>;
+        status = "okay";
+    };
+
+    sensors {
+        compatible            = "zmk,keymap-sensors";
+        sensors               = <&encoder>;
+        triggers-per-rotation = <20>;
+    };
+};

@@ -1,0 +1,35 @@
+name: Build ZMK firmware
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+
+  # main에 push되어 빌드가 성공하면 "latest" 릴리즈를 최신 펌웨어로 교체합니다.
+  # 디버그 빌드(*_debug.uf2)는 평소 사용 금지라 릴리즈에 올리지 않습니다.
+  release:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download firmware
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware
+          path: firmware
+
+      - name: Replace latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          rm -f firmware/*_debug.uf2
+          ls -l firmware
+          gh release delete latest --cleanup-tag --yes || true
+          gh release create latest firmware/*.uf2 \
+            --target "$GITHUB_SHA" \
+            --title "Latest build ($(date -u +%Y-%m-%d))" \
+            --notes "main 브랜치 최신 커밋(${GITHUB_SHA::7})에서 자동 빌드된 펌웨어입니다. / Firmware automatically built from the latest main commit (${GITHUB_SHA::7})."

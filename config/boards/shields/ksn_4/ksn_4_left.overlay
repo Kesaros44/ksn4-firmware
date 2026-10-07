@@ -1,0 +1,54 @@
+#include "ksn_4.dtsi"
+
+/* KSN-4 왼쪽: KSN-1의 넘패드 4열(col0~3 = P0.11, P1.04, P1.06, P1.01)을 PCB에서
+   제거해 7열만 남음. 남은 7열의 GPIO는 KSN-1과 동일하다. */
+&kscan0 {
+    col-gpios
+        = <&gpio1 2  GPIO_ACTIVE_HIGH>
+        , <&gpio1 7  GPIO_ACTIVE_HIGH>
+        , <&gpio1 15 GPIO_ACTIVE_HIGH>
+        , <&gpio1 13 GPIO_ACTIVE_HIGH>
+        , <&gpio1 11 GPIO_ACTIVE_HIGH>
+        , <&gpio0 10 GPIO_ACTIVE_HIGH>
+        , <&gpio0 9  GPIO_ACTIVE_HIGH>
+        ;
+};
+
+/* caps_lock_led: ZMK 코어 공식 zmk,indicator-leds 노드는 여기서 못 씀.
+   그 드라이버(app/src/indicators/indicator_leds.c)는 central 전용 함수인
+   zmk_hid_indicators_get_current_profile()/zmk_endpoint_is_connected()를
+   호출하는데, 그 함수들이 정의된 app/src/hid_indicators.c, app/src/endpoints.c는
+   app/CMakeLists.txt에서 "(NOT CONFIG_ZMK_SPLIT) OR CONFIG_ZMK_SPLIT_ROLE_CENTRAL"
+   조건으로만 컴파일됨. 이 LED는 물리적으로 peripheral(왼쪽)에 달려있어서
+   central에서 처리할 수도 없음 -> zmk,indicator-leds 노드를 두면 링크 단계에서
+   undefined reference 에러가 남. 대신 config/src/ksn1_peripheral_indicators.c
+   (config/zephyr/module.yml + config/CMakeLists.txt로 빌드됨)가 peripheral에서도
+   안전한 zmk_hid_indicators_changed 이벤트로 이 LED를 직접 구동한다.
+
+   status_led: config/src/ksn1_conn_status_relay_peripheral.c가 status-led
+   alias를 통해 직접 구동한다. central(오른쪽)이 PC/호스트에 연결되어 있으면
+   상시 점등, 연결되어 있지 않으면 점멸한다. (central 쪽 상태를 이 LED까지
+   전달하는 방법은 ksn1_conn_status_relay_peripheral.c 상단 주석 참고 -
+   둘 사이에 전용 BLE GATT 서비스를 하나 추가로 얹어서 전달한다.) 예전엔
+   zmk-poor-mans-led-indicator 모듈로 왼쪽<->오른쪽 연결 여부만 표시했었음. */
+/ {
+    leds {
+        compatible = "gpio-leds";
+        caps_lock_led: caps_lock_led {
+            gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;  /* P0.02 - D19 */
+        };
+        status_led: led_1 {
+            gpios = <&gpio0 29 GPIO_ACTIVE_LOW>;  /* P0.29 - D20 (was ACTIVE_HIGH; flipped to
+                                                       test inverted drive circuit - see
+                                                       ksn1_conn_status_relay_peripheral.c
+                                                       "blinks then goes dark on connect" bug) */
+            label = "BLE Status LED";
+        };
+    };
+
+    aliases {
+        caps-lock-led = &caps_lock_led;
+        status-led = &status_led;
+        indicator-led = &status_led;
+    };
+};
